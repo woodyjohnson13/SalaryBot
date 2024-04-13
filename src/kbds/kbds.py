@@ -25,3 +25,10 @@ start_kb3.add(
 )
 start_kb3.adjust(2)
 
+
+start_kb4 = ReplyKeyboardBuilder()
+start_kb4.add(
+    KeyboardButton(text="Вернуться в начало")
+)
+start_kb4.adjust(1)
+

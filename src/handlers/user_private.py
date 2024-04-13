@@ -2,7 +2,7 @@ from aiogram import types, Router, F
 from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from kbds.kbds import start_kb, start_kb2, start_kb3
+from kbds.kbds import start_kb, start_kb2, start_kb3, start_kb4
 from salary.count_salary import Salary
 
 user_router = Router()
@@ -152,21 +152,38 @@ async def done(message: types.Message):
 ###################################################################################################
 
 class CountSalaryEvery(StatesGroup):
-    summ_every = State()
     days_every = State()
+    summ_every = State()
     service_every = State()
+
 
 @user_router.message(StateFilter(None), F.text == "Посчитать за каждый день")
 async def how_many_days(message: types.Message, state: FSMContext):
-    await message.answer(
-        "Сколько смен у Вас было в месяце?", reply_markup=types.ReplyKeyboardRemove()
-    )
+    await message.answer("Сколько смен у Вас было в месяце?", reply_markup=start_kb4.as_markup(
+                        resize_keyboard=True,
+                        input_field_placeholder="Введите кол-во смен"))
     await state.set_state(CountSalaryEvery.days_every)
+
+@user_router.message(StateFilter('*'), F.text.casefold() == "вернуться в начало")
+async def cancel_handler(message: types.Message, state: FSMContext) -> None:
+
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+
+    await state.clear()
+    await message.answer("Хотите ввести всю сумму или посчитать для вас?", reply_markup=start_kb2.as_markup(
+                        resize_keyboard=True,
+                        input_field_placeholder="Выберите нужное действие?"))
+
 
 @user_router.message(CountSalaryEvery.days_every, F.text)
 async def how_many_sum(message: types.Message, state: FSMContext):
     await state.update_data(days=message.text)
-    await message.answer(f"Введите выручку за 1-ый день")
+    await message.answer(f"Введите выручку за 1-ый день",
+                        reply_markup=start_kb4.as_markup(
+                            resize_keyboard=True,
+                            input_field_placeholder="Введите выручку"))
     await state.set_state(CountSalaryEvery.summ_every)
 
 
@@ -180,11 +197,17 @@ async def how_many_sum(message: types.Message, state: FSMContext):
     days = int(data['days'])
     current_day = data.get('current_day', 2)  # Получаем текущий день из состояния, если он есть
     if current_day <= days:
-        await message.answer(f"Введите выручку за {current_day}-ый день")
+        await message.answer(f"Введите выручку за {current_day}-ый день", 
+                            reply_markup=start_kb4.as_markup(
+                            resize_keyboard=True,
+                            input_field_placeholder="Введите выручку"))
         await state.update_data(current_day=current_day + 1)  # Увеличиваем счетчик дня
         await state.set_state(CountSalaryEvery.summ_every)
     else:
-        await message.answer("Вы прошли сервис в этом месяце 'Да/Нет'")
+        await message.answer("Вы прошли сервис в этом месяце 'Да/Нет'",
+                            reply_markup=start_kb4.as_markup(
+                            resize_keyboard=True,
+                            input_field_placeholder="Да/Нет?"))
         await state.set_state(CountSalaryEvery.service_every)
 
 @user_router.message(CountSalaryEvery.service_every, F.text)
