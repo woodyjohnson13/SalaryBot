@@ -106,7 +106,7 @@ async def how_many_sum(message: types.Message):
 
 
 @user_router.message(CountSalaryAll.summ, F.text)
-async def salary(message: types.Message, state: FSMContext):
+async def service(message: types.Message, state: FSMContext):
     if str(message.text).isdigit():
         await state.update_data(summ=message.text)
         await message.answer("Вы прошли сервис в этом месяце 'Да/Нет'", reply_markup=start_kb3.as_markup(
@@ -168,37 +168,28 @@ async def how_many_sum(message: types.Message, state: FSMContext):
     await state.update_data(days=message.text)
     await message.answer(f"Введите выручку за 1-ый день")
     await state.set_state(CountSalaryEvery.summ_every)
-"""
-# @user_router.message(CountSalaryEvery.summ, F.text)
-# async def how_many_sum(message: types.Message, state: FSMContext):
-#     await state.update_data(summ=message.text)
-#     data = await state.get_data
-#     day = 2
-#     if await data[day] <= day:
-#         await message.answer(f"Введите выручку за {day} день")
-#         await state.set_state(CountSalaryEvery.summ)
-#         day += 1
-#     else:
-#         await message.answer(f"Ваша зарплата составит {data}")
-"""  
+
 
 @user_router.message(CountSalaryEvery.summ_every, F.text)
 async def how_many_sum(message: types.Message, state: FSMContext):
     await state.update_data(summ_every=message.text)
     data = await state.get_data()
-    print(str(data))
-    days = int(data['days'])  # Количество дней, указанных пользователем
-    print(str(days))
+    count_summ = data.get('count_summ', 0)
+    await state.update_data(count_summ = count_summ + int(message.text))
+    print(count_summ)
+    days = int(data['days'])
     current_day = data.get('current_day', 2)  # Получаем текущий день из состояния, если он есть
-    print(str(current_day))
     if current_day <= days:
         await message.answer(f"Введите выручку за {current_day}-ый день")
         await state.update_data(current_day=current_day + 1)  # Увеличиваем счетчик дня
         await state.set_state(CountSalaryEvery.summ_every)
     else:
-        total_salary = 0
-        for day in range(1, current_day):
-            total_salary += float(data.get(f"day_{day}_summ", 0))
-            print(str(total_salary))
-        await message.answer(f"Ваша зарплата за месяц составит: {total_salary}")
-        await state.finish()
+        await message.answer("Вы прошли сервис в этом месяце 'Да/Нет'")
+        await state.set_state(CountSalaryEvery.service_every)
+
+@user_router.message(CountSalaryEvery.service_every, F.text)
+async def every_service(message: types.Message, state: FSMContext):
+    await state.update_data(service_every=message.text)
+    data = await state.get_data()
+    await message.answer(f"Вашу зарплата без учета НДФЛ составит примерно: {ct.count_every(data)}р.")
+    await state.clear()
