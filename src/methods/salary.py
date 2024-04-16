@@ -1,5 +1,3 @@
-#{'days': '15', 'sum': '567000', 'service': 'Да'}
-
 class Salary:
 
     def count_all(self, data_bot: dict):
