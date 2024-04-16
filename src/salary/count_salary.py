@@ -11,7 +11,7 @@ class Salary:
         if serv.lower() == "да":
             return str(day * 2100 + summ)
         else: 
-            return str(day * 1800 + summ)
+            return str(day * 1960 + summ)
         
     def count_every(self, data_bot):
         day = data_bot["days"]
@@ -25,6 +25,6 @@ class Salary:
         if serv.lower() == "да":
             return str(day * 2100 + full_summ)
         else: 
-            return str(day * 1800 + full_summ)
+            return str(day * 1960 + full_summ)
 
 
